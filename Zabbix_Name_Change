@@ -1,0 +1,41 @@
+import yaml
+import pandas as pd
+import json
+
+yaml_file = 'zbx_export_hosts.yaml'
+excel_file = 'TC_Zabbix.xlsx'
+
+def parse_yaml_to_json(yaml_file):
+    with open(yaml_file, 'r') as stream:
+        try:
+            loaded = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+
+    return loaded
+
+def read_excel_data(excel_file):
+    df = pd.read_excel(excel_file)
+    return df
+
+def replace_names_in_yaml(parsed_yaml, excel_data):
+    old_names = excel_data["Old Name"].tolist()
+    new_names = excel_data["New Name"].tolist()
+
+    for item in parsed_yaml['zabbix_export']['hosts']:
+        if "name" in item and item["name"] in old_names:
+            index = old_names.index(item["name"])
+            item["name"] = new_names[index]
+
+    return parsed_yaml
+
+if __name__ == "__main__":
+    parsed_yaml = parse_yaml_to_json(yaml_file)
+    excel_data = read_excel_data(excel_file)
+    updated_yaml = replace_names_in_yaml(parsed_yaml, excel_data)
+
+    with open("new.json", "w") as file:
+        json.dump(updated_yaml, file)
+
+    
+# paste json data on https://www.json2yaml.com/ to convert json to yaml.
